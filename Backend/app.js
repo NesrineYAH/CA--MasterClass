@@ -1,37 +1,74 @@
-import express from "express";
-import fs from "fs";
+// Backend/app.js
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+// Routes
+const userRoutes = require("./routes/users");
+const ProductRoutes = require("./routes/product");
+const categorieRoutes = require("./routes/categories");
+const cartRoutes = require("./routes/carts");
+const addressRoutes = require("./routes/addresses");
+const orderRoutes = require("./routes/orders");
+const stripeRoute = require("./routes/stripe");
+const commentsRoutes = require("./routes/comments");
+const paymentMethodsRoutes = require("./routes/paymentMethods");
+const paymentsRoute = require("./routes/payments");
+const favoritesRoutes = require("./routes/favorites");
+const { authMiddleware } = require("./middleware/auth");
+const cookieParser = require("cookie-parser");
+
+require("./mongoDB/DB");
 
 const app = express();
-app.use(express.json()); // obligatoire pour lire req.body
+const PORT = process.env.PORT || 5000;
 
-const USERS_FILE = "./data/users.json";
+app.use(
+  "/api/stripe/webhook",
+  bodyParser.raw({ type: "application/json" })
+);
 
-// POST /register
-app.post("/data/users/register", (req, res) => {
-  const { username, password } = req.body;
+// ⚡ Middlewares globaux
+app.use(cors({
+  origin: ["http://localhost:5173", "http://127.0.0.1:5173", "https://cv.nesrinebekkar.com"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
-  // Vérifie que le username et le password sont fournis
-  if (!username || !password) {
-    return res.status(400).json({ message: "username et password requis" });
-  }
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-  // Lire les utilisateurs existants
-  const users = JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
 
-  // Vérifie si l'utilisateur existe déjà
-  if (users.find((u) => u.username === username)) {
-    return res.status(400).json({ message: "Utilisateur déjà existant" });
-  }
+app.use("/api/stripe", stripeRoute);
+app.use("/api/payment", paymentsRoute);
 
-  // Créer le nouvel utilisateur
-  const newUser = { id: Date.now(), username, password };
-  users.push(newUser);
 
-  // Écrire dans le fichier JSON
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+app.use("/uploads", express.static("uploads"));
+app.use("/images", express.static(path.join(__dirname, "images")));
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/etiquettes", express.static(path.join(__dirname, "public/etiquettes")));
+app.use("/invoices", express.static(path.join(__dirname, "public/invoices")));
 
-  res.status(201).json(newUser);
+app.use("/api/users", userRoutes);
+app.use("/api/products", ProductRoutes);
+app.use("/api/products", commentsRoutes);
+app.use("/api/categories", categorieRoutes);
+app.use("/api/carts", cartRoutes);
+app.use("/api/addresses", addressRoutes);
+app.use("/api/orders", orderRoutes);
+
+
+
+app.use("/api", authMiddleware, paymentMethodsRoutes);
+app.use("/api/users/favorites", favoritesRoutes);
+
+app.get("/", (req, res) => {
+  res.send("🚀 Backend Parfum API en marche !");
 });
 
-app.listen(5000, () => console.log("Server running on port 5000"));
-export default app;
+module.exports = app;
+
+
+
