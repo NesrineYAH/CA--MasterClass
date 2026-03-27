@@ -1,5 +1,5 @@
 const User = require("../Model/userModel.js");
-const bcrypt = require("bcrypt");
+const argon2 = require("argon2");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
@@ -8,47 +8,13 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[\w!@#$%^&*]{8,32}$/;
 const signatureToken = process.env.CLE_TOKEN;
 
-// Register - Complet avec toutes les validations
+// Register  argon2
 exports.Register = async (req, res) => {
   try {
     const { email, password, username } = req.body;
 
-    // Validation des champs requis
-    if (!email || !password || !username) {
-      return res.status(400).json({ error: "Tous les champs sont requis" });
-    }
+    const hashedPassword = await argon2.hash(password);
 
-    // Validation email avec regex
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Format d'email non valide" });
-    }
-
-    // Validation password avec regex
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({
-        message:
-          "Le mot de passe doit contenir au moins 8 caractères, une majuscule, un chiffre et un caractère spécial",
-      });
-    }
-
-    // Vérification si l'utilisateur existe déjà
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: "Cet utilisateur existe déjà" });
-    }
-
-    // Vérification si le username est déjà pris
-    const existingUsername = await User.findOne({ username });
-    if (existingUsername) {
-      return res
-        .status(400)
-        .json({ error: "Ce nom d'utilisateur est déjà pris" });
-    }
-
-    // Hash du mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Création de l'utilisateur
     const user = new User({
       email,
       password: hashedPassword,
@@ -56,74 +22,32 @@ exports.Register = async (req, res) => {
     });
 
     await user.save();
-
-    // Génération du token après inscription
-    const token = jwt.sign({ userId: user._id }, signatureToken, {
-      expiresIn: "24h",
-    });
-
-    res.status(201).json({
-      message: "Utilisateur créé avec succès",
-      user: {
-        id: user._id,
-        email: user.email,
-        username: user.username,
-      },
-      token: token,
-    });
+    res.status(201).json({ message: "Utilisateur créé avec succès" });
   } catch (error) {
-    console.error("Erreur register:", error);
     res.status(500).json({ error: error.message });
   }
 };
-
-// Controller/userController.js
+/*
 exports.Login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log("📧 Email reçu:", email);
-    console.log("🔑 Password reçu:", password);
-    console.log("📦 Body complet:", req.body);
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email et mot de passe requis" });
-    }
-
-    // Recherche de l'utilisateur
     const user = await User.findOne({ email });
-    console.log("👤 Utilisateur trouvé:", user ? "OUI" : "NON");
-
     if (!user) {
-      console.log("❌ Aucun utilisateur avec cet email");
       return res
         .status(400)
         .json({ message: "Email ou mot de passe incorrect" });
     }
 
-    console.log("🔐 Mot de passe hashé en DB:", user.password);
-    console.log("🔑 Mot de passe reçu (clair):", password);
-
-    // Vérification du mot de passe
-    const match = await bcrypt.compare(password, user.password);
-    console.log("✅ Comparaison bcrypt:", match);
+    const match = await argon2.verify(user.password, password);
 
     if (!match) {
-      console.log(
-        "❌ Mot de passe incorrect - bcrypt.compare a retourné false"
-      );
       return res
         .status(400)
         .json({ message: "Email ou mot de passe incorrect" });
     }
 
-    // Génération du token
-    const token = jwt.sign({ userId: user._id }, process.env.CLE_TOKEN, {
-      expiresIn: "24h",
-    });
-
-    console.log("🎉 Connexion réussie pour:", email);
-
+    // ... génération du token
     res.status(200).json({
       message: "Connexion réussie",
       user: {
@@ -134,12 +58,64 @@ exports.Login = async (req, res) => {
       token: token,
     });
   } catch (err) {
-    console.error("💥 Erreur login:", err);
+    res.status(500).json({ message: "Erreur serveur", error: err.message });
+  }
+};
+*/
+//temporaire
+// Dans userController.js - debug encodage
+exports.Login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    console.log("=== 🚨 DEBUG ENCODAGE ===");
+    console.log("🔑 Password reçu:", `"${password}"`);
+    console.log("📏 Longueur:", password.length);
+    console.log("🔤 Chars individuels:");
+    for (let i = 0; i < password.length; i++) {
+      console.log(
+        `   ${i}: '${password[i]}' (code: ${password.charCodeAt(i)})`
+      );
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Email ou mot de passe incorrect" });
+    }
+
+    // Test avec différentes variantes
+    console.log("\n🔐 TESTS MULTIPLES:");
+
+    // Test 1: Password original
+    const test1 = await argon2.verify(user.password, password);
+    console.log(`   Original "${password}": ${test1}`);
+
+    // Test 2: Password trimé
+    const test2 = await argon2.verify(user.password, password.trim());
+    console.log(`   Trimmed "${password.trim()}": ${test2}`);
+
+    // Test 3: Sans le *
+    if (password.includes("*")) {
+      const withoutStar = password.replace("*", "");
+      const test3 = await argon2.verify(user.password, withoutStar);
+      console.log(`   Sans * "${withoutStar}": ${test3}`);
+    }
+
+    if (!test1) {
+      return res
+        .status(400)
+        .json({ message: "Email ou mot de passe incorrect" });
+    }
+
+    // ... reste du code
+  } catch (err) {
+    console.error("💥 Erreur:", err);
     res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 };
 
-// Get current user profile
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("-password");
