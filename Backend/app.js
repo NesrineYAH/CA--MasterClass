@@ -8,7 +8,7 @@ const userRoutes = require("./routes/users");
 const ProductRoutes = require("./routes/product");
 const categorieRoutes = require("./routes/categories");
 const cartRoutes = require("./routes/carts");
-const addressRoutes = require("./routes/addresses");
+/*const addressRoutes = require("./routes/addresses");
 const orderRoutes = require("./routes/orders");
 const stripeRoute = require("./routes/stripe");
 const commentsRoutes = require("./routes/comments");
@@ -16,6 +16,7 @@ const paymentMethodsRoutes = require("./routes/paymentMethods");
 const paymentsRoute = require("./routes/payments");
 const favoritesRoutes = require("./routes/favorites");
 const { authMiddleware } = require("./middleware/auth");
+*/
 const cookieParser = require("cookie-parser");
 
 require("./mongoDB/DB");
@@ -30,7 +31,7 @@ app.use(
 
 // ⚡ Middlewares globaux
 app.use(cors({
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173", "https://cv.nesrinebekkar.com"],
+  origin: ["http://localhost:5173"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],

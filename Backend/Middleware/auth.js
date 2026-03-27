@@ -1,23 +1,45 @@
-// Backend/Middleware/Auth.js
+// Backend/middleware/auth.js
 const jwt = require("jsonwebtoken");
+const User = require("../Model/User");
 require("dotenv").config();
 
-const signatureToken = process.env.CLE_TOKEN;
+async function authMiddleware(req, res, next) {
+    try {
+        const tokenFromCookie = req.cookies?.token || req.cookies?.jwt;
+        const authHeader = req.headers.authorization;
+        const tokenFromHeader = authHeader?.startsWith("Bearer ")
+            ? authHeader.split(" ")[1]
+            : null;
 
-const Auth = (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res.status(401).json({ error: "Token manquant" });
+        const token = tokenFromCookie || tokenFromHeader;
+        if (!token) return res.status(401).json({ error: "Non authentifié" });
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+        const user = await User.findById(decoded.userId).select("-password");
+        if (!user) {
+            return res.status(401).json({ error: "Utilisateur introuvable" });
+        }
+
+        req.user = {
+            ...user.toObject(),
+            userId: user._id.toString(),
+        };
+
+        next();
+    } catch (error) {
+        console.error("Erreur authMiddleware :", error);
+        res.status(401).json({ error: "Token invalide" });
     }
+}
 
-    const decodedToken = jwt.verify(token, signatureToken);
-    req.auth = { userId: decodedToken.userId };
+function isAdmin(req, res, next) {
+    if (req.user && (req.user.role === "admin" || req.user.role === "vendeur")) {
+        next();
+    } else {
+        res.status(403).json({ error: "Accès interdit" });
+    }
+}
 
-    next();
-  } catch (error) {
-    res.status(401).json({ error: "Token invalide" });
-  }
-};
-
-module.exports = Auth; // ✅ Pas d'accolades ici !
+module.exports = { authMiddleware, isAdmin };

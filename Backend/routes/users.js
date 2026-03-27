@@ -19,4 +19,3 @@ router.put("/preferences", authMiddleware, userCtrl.updatePreferences);
 
 
 module.exports = router;
-//  *Neshadil
