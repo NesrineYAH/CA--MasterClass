@@ -5,10 +5,13 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 // Routes
 const userRoutes = require("./routes/users");
+
+
+/*
 const ProductRoutes = require("./routes/product");
 const categorieRoutes = require("./routes/categories");
 const cartRoutes = require("./routes/carts");
-/*const addressRoutes = require("./routes/addresses");
+const addressRoutes = require("./routes/addresses");
 const orderRoutes = require("./routes/orders");
 const stripeRoute = require("./routes/stripe");
 const commentsRoutes = require("./routes/comments");
@@ -53,13 +56,14 @@ app.use("/etiquettes", express.static(path.join(__dirname, "public/etiquettes"))
 app.use("/invoices", express.static(path.join(__dirname, "public/invoices")));
 
 app.use("/api/users", userRoutes);
+/*
 app.use("/api/products", ProductRoutes);
 app.use("/api/products", commentsRoutes);
 app.use("/api/categories", categorieRoutes);
 app.use("/api/carts", cartRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/orders", orderRoutes);
-
+*/
 
 
 app.use("/api", authMiddleware, paymentMethodsRoutes);

@@ -365,7 +365,7 @@ exports.updatePreferences = async (req, res) => {
             {
                 new: true,
                 runValidators: true,
-                context: "query"   // 🔥 IMPORTANT
+                context: "query"   //  IMPORTANT
             }
         ).select("-password");
 
