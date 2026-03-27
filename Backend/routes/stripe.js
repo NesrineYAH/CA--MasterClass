@@ -7,7 +7,7 @@ const Order = require("../Model/Order");
 const { authMiddleware } = require("../middleware/auth");
 const { sendEmail } = require("../utils/mailer");
 const generateInvoice = require("../utils/generateInvoiceBuffer");
-const Address = require("../Model/Address");
+const Address = require("../Model/Recipe");
 const fs = require("fs");
 
 
