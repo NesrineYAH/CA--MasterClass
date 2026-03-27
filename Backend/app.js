@@ -5,8 +5,6 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 // Routes
 const userRoutes = require("./routes/users");
-
-
 /*
 const ProductRoutes = require("./routes/product");
 const categorieRoutes = require("./routes/categories");
@@ -31,7 +29,6 @@ app.use(
   "/api/stripe/webhook",
   bodyParser.raw({ type: "application/json" })
 );
-
 // ⚡ Middlewares globaux
 app.use(cors({
   origin: ["http://localhost:5173"],
@@ -43,18 +40,17 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-
+/*
 app.use("/api/stripe", stripeRoute);
 app.use("/api/payment", paymentsRoute);
-
-
+*/
 app.use("/uploads", express.static("uploads"));
 app.use("/images", express.static(path.join(__dirname, "images")));
 app.use(express.static(path.join(__dirname, "public")));
+/*
 app.use("/etiquettes", express.static(path.join(__dirname, "public/etiquettes")));
 app.use("/invoices", express.static(path.join(__dirname, "public/invoices")));
-
+*/
 app.use("/api/users", userRoutes);
 /*
 app.use("/api/products", ProductRoutes);
